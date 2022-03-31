@@ -1,0 +1,18 @@
+bmtk.tests package
+==================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bmtk.tests.simulator
+
+Module contents
+---------------
+
+.. automodule:: bmtk.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
