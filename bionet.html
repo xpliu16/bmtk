@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>BioNet &#8212; Brain Modeling Toolkit 0.0.6 documentation</title>
+    <title>BioNet &#8212; Brain Modeling Toolkit 1.0.6 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/aibs_sphinx.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -692,8 +692,8 @@ only support injections at the soma.</p>
 <section id="extracellular-stimulation">
 <h3>Extracellular Stimulation<a class="headerlink" href="#extracellular-stimulation" title="Permalink to this headline">¶</a></h3>
 <p>Allows for a set of external electrodes to provide a continuous stimulation in the neuropil. Requires a space-separated CSV file with one row for each electrode:</p>
-<div class="highlight-default notranslate" id="xstim-electrode-csv"><div class="highlight"><pre><span></span><span class="n">ip</span> <span class="n">pos_x</span> <span class="n">pos_y</span> <span class="n">pos_z</span> <span class="n">rotation_x</span> <span class="n">rotation_y</span> <span class="n">rotation_z</span>
-<span class="mi">0</span> <span class="mf">6.1803398874989481</span> <span class="mf">0.0</span> <span class="mf">19.021130325903069</span> <span class="mf">0.0</span> <span class="mf">0.0</span> <span class="mf">0.0</span>
+<div class="highlight-text notranslate" id="xstim-electrode-csv"><div class="highlight"><pre><span></span>ip pos_x pos_y pos_z rotation_x rotation_y rotation_z
+0 6.1803398874989481 0.0 19.021130325903069 0.0 0.0 0.0
 </pre></div>
 </div>
 <p>And in the configuration file</p>
@@ -774,12 +774,12 @@ will be used, eg “calcium_concentration.h5” and “membrane_potential.h5”<
 <p>Will simulate recording from an extracellular electrode placed in the neuropil. See
 <a class="reference external" href="https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#extracellular-report">SONATA documentation</a>.
 Requires a space-separated CSV file to specify the location of each recording channel:</p>
-<div class="highlight-default notranslate" id="components-xelectrode-linear-probe-csv"><div class="highlight"><pre><span></span><span class="n">channel</span> <span class="n">x_pos</span> <span class="n">y_pos</span> <span class="n">z_pos</span>
-<span class="mi">0</span> <span class="mf">10.0</span> <span class="mi">0</span> <span class="mf">5.0</span>
-<span class="mi">1</span> <span class="mf">10.0</span> <span class="o">-</span><span class="mi">10</span> <span class="mf">5.0</span>
-<span class="mi">2</span> <span class="mf">10.0</span> <span class="o">-</span><span class="mi">20</span> <span class="mf">5.0</span>
-<span class="mi">3</span> <span class="mf">10.0</span> <span class="o">-</span><span class="mi">30</span> <span class="mf">5.0</span>
-<span class="mi">4</span> <span class="mf">10.0</span> <span class="o">-</span><span class="mi">40</span> <span class="mf">5.0</span>
+<div class="highlight-text notranslate" id="components-xelectrode-linear-probe-csv"><div class="highlight"><pre><span></span>channel x_pos y_pos z_pos
+0 10.0 0 5.0
+1 10.0 -10 5.0
+2 10.0 -20 5.0
+3 10.0 -30 5.0
+4 10.0 -40 5.0
 </pre></div>
 </div>
 <p>And in the config</p>
@@ -836,13 +836,169 @@ file, which will direct BMTK to randomly choose a target synapse location under 
 to a neuronal area (somatic, axon, apical, basal), and “”istance_range” is the minimum and maximum arc-length distance
 (in um) from the soma to place the synapse. For example to specify synapses be created either at the soma or nearby
 basal dendrites:</p>
-<div class="highlight-default notranslate" id="edge-type-csv"><div class="highlight"><pre><span></span><span class="n">edge_type_id</span> <span class="n">distance_range</span> <span class="n">target_sections</span> <span class="o">...</span>
-<span class="mi">100</span> <span class="s2">&quot;[0.0, 100.0]&quot;</span> <span class="s2">&quot;[&#39;somatic&#39;, &#39;basal&#39;]&quot;</span> <span class="o">...</span>
+<div class="highlight-text notranslate" id="edge-type-csv"><div class="highlight"><pre><span></span>edge_type_id distance_range target_sections ...
+100 &quot;[0.0, 100.0]&quot; &quot;[&#39;somatic&#39;, &#39;basal&#39;]&quot; ...
 </pre></div>
 </div>
 <p>Using parameters “distance_range” and “target_sections” will speed up the instantiation by a bit. And has the benefit
 that the modeler doesn’t need to know the full details of the target_morphology. It may cause results to vary, but in
 our experience for large-networks usually don’t change the dynamics.</p>
+</section>
+<section id="replaying-recurrent-activity-without-inputs">
+<h3>Replaying recurrent activity without inputs<a class="headerlink" href="#replaying-recurrent-activity-without-inputs" title="Permalink to this headline">¶</a></h3>
+<p>Most of the times when we are running a simulation of a recurrently-connected network, the network is being stimulated
+by some non-recurrent source; like a voltage clamp, current clamp, extraceullar pulse, or being syanptically driven
+by a pre-recorded spike-trains (eg, virtual cells). Thus the firing-times/voltage potentials of our network cells are
+being driven by two primary sources; external inputs and synaptic/electrical activity from other cells in the network.
+Being able to separate the contributions of the two type of drivers is often important for analysis of our network.</p>
+<p>Being able to see how our network behaves without recurrent connections is usually trivial to implement using the SONATA
+configuration file. For example, a network called “internal” might have both internal-to-internal recurrent connections
+and external-to-internal connections as represented in the “networks” section of the config</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;networks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;nodes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_nodes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;node_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_node_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;nodes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_nodes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;node_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_node_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;edges&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edges_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_internal_edges.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edge_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_internal_edge_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edges_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_internal_edges.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edge_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_internal_edge_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>To run the simulation without the recurrent internal-to-internal connections we just need to remove the relevant
+SONATA network files:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;networks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;nodes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_nodes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;node_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_node_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;nodes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_nodes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;node_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_node_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;edges&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edges_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_internal_edges.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edge_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/external_internal_edge_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Plotting the spikes raster we can see how the network behaves without recurrent connections (right) vs. the normal
+fully connected simulation (left):</p>
+<img alt="_images/disconnected_normal_sims.png" src="_images/disconnected_normal_sims.png" />
+<p>But what if we want to rerun the full simulation but without the external inputs, how see how only the recurrent
+activity affects the full simulation? To do so we must use a special <strong>“replay”</strong> input module. In the
+“inputs” section of the config we add the following:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;recurrent_replay&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;input_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replay_spikes&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;module&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replay&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;spikes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$PREV_RESULTS_DIR/spikes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;edges&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edges_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_internal_edges.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edge_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_internal_edge_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Here we have</dt><dd><ul class="simple">
+<li><p>“<em>recurrent_replay</em>” is the name of this specific input and can be changed to whatever we like.</p></li>
+<li><p><strong>input_type</strong> and <strong>module</strong> are always set to <em>replay_spikes</em> and <em>replay</em>, respecitively, to direct bmtk as to the type of input/module being used.</p></li>
+<li><p><strong>spikes_file</strong> is the name of the recurrent spiking activity we want to replay when we rerun the simulation. In this case it is the locations of the output spikes results when we ran the fully connected simulation.</p></li>
+<li><p><strong>edges</strong> is the location of the edges and edge-types SONATA network files, in this case it is the files containing the recurrent internal-to-internal connections.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Then we update the “networks” section since we don’t want to have any external-to-internal type connections:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;networks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">      </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;nodes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_nodes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;node_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_node_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>And we can run the simulation with the updated config and see what the network looks like when activity is only being
+drived by recurrent activity</p>
+<img alt="_images/disconnected_recurrent_only.png" src="_images/disconnected_recurrent_only.png" />
+<p>The module also has optional arguments <strong>source_node_set</strong> and <strong>target_node_set</strong> which allows us to rerun recurrent
+connections, but only on edges where the source (pre-synaptic) and target (post-synaptic) cells meet certain criteria.
+For example, we only want to run simulation on edges where the target cells are “biophysically-detailed Scnn1a” cells
+and the source cells are either “Scnn1a”, “Rorb”, or “Nr5a1” cell-types.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;recurrent_replay&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;input_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replay_spikes&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;module&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replay&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;spikes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$PREV_RESULTS_DIR/spikes.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;source_node_set&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;population&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;internal&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Scnn1a&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Rorb&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Nr5a1&quot;</span><span class="p">]</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;target_node_set&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;population&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;internal&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;model_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Scnn1a&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;model_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;biophysical&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;edges&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edges_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_internal_edges.h5&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;edge_types_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$NETWORK_DIR/internal_internal_edge_types.csv&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<img alt="_images/disconnected_scnn1a.png" src="_images/disconnected_scnn1a.png" />
+<p>You can combine “replay” inputs with virtual inputs, current and voltage clamps. And you can have multiple
+“replay” inputs in the same simulation by adding multiple subsections in the “inputs” sections of the config:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
+  &quot;inputs&quot;: {
+    &quot;replay_1&quot;: {
+      &quot;input_type&quot;: &quot;replay_spikes&quot;,
+      &quot;module&quot;: &quot;replay&quot;,
+      ...
+    },
+    &quot;replay_1&quot;: {
+      &quot;input_type&quot;: &quot;replay_spikes&quot;,
+      &quot;module&quot;: &quot;replay&quot;,
+      ...
+    },
+  }
+}
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://github.com/AllenInstitute/bmtk/tree/develop/examples/bio_450cells_replay">examples/bio_450cells_replay/</a>
+folder for examples of running replayed simulations.</p>
 </section>
 </section>
 </section>
@@ -879,8 +1035,9 @@ our experience for large-networks usually don’t change the dynamics.</p>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Example Networks</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/AllenInstitute/bmtk.git">Github Profile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workshop.html">Annual Modeling Software Workshop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="registration.html">Registration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributors.html">Contributors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="registration.html">Register</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bmtk/bmtk.html">Source Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="bmtk/bmtk.analyzer.html">bmtk.analyzer package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bmtk/bmtk.builder.html">bmtk.builder package</a></li>
