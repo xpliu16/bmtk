@@ -16,4 +16,6 @@ if __name__ == '__main__':
     if __file__ != sys.argv[-1]:
         run(sys.argv[-1])
     else:
-        run('${CONFIG}')
+        run('config.comsol_stat.json')
+        # run('config.comsol_stat2.json')
+        # run('config.comsol_tdep.json')
