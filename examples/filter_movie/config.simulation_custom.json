@@ -22,11 +22,7 @@
       "input_type": "movie",
       "module": "movie",
       "data_file": "$INPUT_DIR/test_scene.npy",
-      "frame_rate": 1000.0,
-      "evaluation_options": {
-        "t_min": 3.0,
-        "t_max": 4.0
-      }
+      "frame_rate": 1000.0
     }
   },
 
